@@ -1,0 +1,5 @@
+# Time NodeID EventType(j=join,f=fail) [JoinNodeID]
+0 16 j
+0 6 j 16
+10 8 j 16
+11 10 j 16

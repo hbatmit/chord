@@ -1,0 +1,31 @@
+# Time NodeID EventType(j=join,f=fail) [JoinNodeID]
+# python chord.py -t 100 -f  fig4.dat  -s 1000 -r 1
+
+0 9 j 
+0 17 j 9
+1 25 j 17
+
+2 17 s
+3 25 s
+4 9 s
+
+12 17 s
+13 25 s
+14 9 s
+
+# 13 now joins
+21 13 j 17
+
+# 20 joins
+22 20 j 25
+
+# and 20 stabilizes
+23 20 s
+
+23 9 s
+24 17 s
+25 25 s
+
+27 13 s
+28 17 f
+30 13 s
