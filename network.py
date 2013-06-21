@@ -27,13 +27,12 @@ class Node:
     # Assume that n1 is a valid node or is None; if None, the joining Node is
     # the first node in the system.
     def join(self, n1_id):
+        print 't=%d JOIN %s' % (self.network.curtime, self.repr())
         self.pred = None
         n1 = self.network.id2node(n1_id)
         self.succ = n1.find_successor(self.id)
         self.succlist = self.succ.get_succ_list()
         self.clean_succ_list()
-#        if self.network.config.verbose:
-        print 't=%d JOIN %s' % (self.network.curtime, self.repr())
 
         
     # Is x inside circular range (a,b] or (a,b)? 
@@ -109,6 +108,7 @@ class Node:
     def stabilize(self):
         if self.network.config.verbose:
             print 't=%d STABILIZE %s' % (self.network.curtime, self.repr())
+
         x = self.succ.pred
         if x is not None and self.inside(x.id, self.id, self.succ.id, False):
             if self.network.config.verbose:
@@ -119,6 +119,7 @@ class Node:
         self.succlist = self.succ.get_succ_list()
         self.clean_succ_list()
         self.check_predecessor()
+
         # Schedule re-stabilization (and check_predecessor) in the future.
         self.network.add_event((int(self.network.curtime+self.network.config.stabperiod), self.id, 's'))
 
@@ -184,7 +185,9 @@ class Network:
     def step(self):
         self.curtime = self.events[0][0]
         rmlist = []
-        for e in self.events:
+        i = 0
+        while i < len(self.events):
+            e = self.events[i]
             e_time = int(e[0])
             if e_time > self.curtime:
                 for nodeid in rmlist:
@@ -209,7 +212,7 @@ class Network:
                     rmlist.append(e_nodeid)
             elif e_type == 's':  # stabilize
                 self.id2node(e_nodeid).stabilize()
-            self.events.remove(e)
+            del self.events[i]
 
     # Add a Node to the Chord network. Really just for bookkeeping and 
     # keeping track of live nodes.
