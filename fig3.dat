@@ -1,0 +1,31 @@
+# Time NodeID EventType(j=join,f=fail) [JoinNodeID]
+# python chord.py -t 20 -f  fig3.dat  -s 1000 -r 1
+
+0 60 j
+0 32 j 60
+1 32 s
+2 60 s
+
+3 44 j 60
+4 44 s
+5 5 j 60
+6 5 s
+
+7 32 r
+7 44 r
+
+8 60 f
+
+9 32 u
+9 44 u
+10 32 l
+11 44 s
+
+# The above is how fig 3's events work. There seems to be a problem in PZ 
+# because after stage 2 (t=6 above), it is claimed that 5's successor is 44.
+# But 5 would learn about 32 from 60 when it joins via find_successor, so 
+# the OrderedAppendages invariant seems like it should hold.
+
+# The next two lines are what it takes to get Fig 3 to be correctly stabilized
+12 32 s
+13 32 s

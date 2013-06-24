@@ -12,16 +12,20 @@ if __name__ == '__main__':
                           default="scene.dat", help="scenarios for node joins/fails")
         parser.add_option("-t", "--simtime", type="int", dest="simtime", 
                           default=200, help="total simulation time steps")
-        parser.add_option("-l", "--latency", type="int", dest="maxlat", 
-                          default=1, help="max latency between nodes")
+        parser.add_option("-d", "--delay", type="int", dest="maxdelay", 
+                          default=1, help="max delay between nodes")
         parser.add_option("-p", "--prob", type="float", dest="prob", 
                           default=1.0, help="P(success) for a network message")
         parser.add_option("-s", "--stab", type="int", dest="stabperiod", 
                           default=5, help="stabilize every ... timesteps")
         parser.add_option("-r", "--maxsucc", type="int", dest="maxsucc", 
                           default=3, help="max size of successor list")
-        parser.add_option("-a", "--async", type="int", dest="async", 
-                          default=0, help="async succ reconciliation (0 means SYNC)")
+        parser.add_option("-u", "--update", type="int", dest="update", 
+                          default=0, help="update period for the async version")
+        parser.add_option("-c", "--reconcile", type="int", dest="recon", 
+                          default=0, help="update period for the async version")
+        parser.add_option("-l", "--flush", type="int", dest="flush", 
+                          default=0, help="update period for the async version")
         parser.add_option("-v", "--verbose", action="store_true", dest="verbose", 
                           default=False, help="print diagnostics/debugging")
 

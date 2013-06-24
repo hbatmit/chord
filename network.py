@@ -30,7 +30,8 @@ class Node:
         self.pred = None
         n1 = self.network.id2node(n1_id)
         self.succ = n1.find_successor(self.id)
-        self.reconcile()
+        # fix_successor isn't needed here because we just got our successor
+        self.reconcile() # Section V-E.1 of ToN paper says to do this here
 #        if self.network.config.async == 0: # synchronous succ reconciliation
 #            self.reconcile()
 #            self.succlist = self.succ.get_succ_list()
@@ -118,11 +119,19 @@ class Node:
                 print '\tsucc.pred is', x.id
             self.succ = x
         self.succ.notify(self)
-        if self.network.config.async == 0:
+        if self.network.config.update == 0: # the intended "synchronous" protocol
+            self.fix_successor() # aka "update" in PODC pcode comment & PZ
+        if self.network.config.recon == 0: # the intended "synchronous" protocol
             self.reconcile()
-        self.check_predecessor()
+        if self.network.config.flush == 0: # the intended "synchronous" protocol
+            self.fix_predecessor() # aka "flush" 
 
-        # Schedule re-stabilization (and check_predecessor) in the future.
+        # Schedule re-stabilization for a future time.  In the
+        # "synchronous" mode, fix_successor(), reconcile(), and
+        # fix_predecessor() (i.e., "update", "reconcile", and "flush")
+        # will be called when stabilize() is next called. Otherwise,
+        # they each have their own periodic schedule (which is
+        # unlikely to work correctly in some cases).
         self.network.add_event((int(self.network.curtime+self.network.config.stabperiod), self.id, 's'))
 
 
@@ -141,10 +150,12 @@ class Node:
 #            self.succ = n1
 
 
-    # Called periodically from inside stabilize(). 
+    # Called periodically from inside stabilize() if async is 0. 
+    # Otherwise, we must schedule it separately.
     # Checks whether predecessor has failed.
-    # Note: was called "fix_predecessor" in PODC 2002.
-    def check_predecessor(self):
+    # Note: was called "fix_predecessor" in PODC 2002, and "flush" in the
+    # PODC pseudocode comment and in PZ, and "check_predecessor" in ToN.
+    def fix_predecessor(self):
         if (self.pred is not None and self.pred.id not in self.network.livenodes):
             if self.network.config.verbose:
                 print 't=%d %s pred fail' % (self.network.curtime, self.repr())
@@ -153,8 +164,13 @@ class Node:
                 self.succ = self
             self.pred = None
 
+        if self.network.config.flush != 0:
+            self.network.add_event((int(self.network.curtime+self.network.config.flush), self.id, 'u'))
+
+
     # From PODC: periodically update failed successor pointer, if necessary.
     # Make self.succ be the smallest live node in the successor list.
+    # fix_successor() is termed an "update" event in PODC comments & PZ.
     def fix_successor(self):
         if self.succ.id not in self.network.livenodes:
             if self.network.config.verbose:
@@ -182,13 +198,19 @@ class Node:
                 for n in self.succlist: print n.id,
                 print ']'
 
+        if self.network.config.update != 0:
+            self.network.add_event((int(self.network.curtime+self.network.config.update), self.id, 'u'))
 
+
+    # reconcile() fixes our successor list. Any reasonable interpretation would
+    # have the fix to our successor always happen synchronously, but the
+    # the analysis in PZ assumes asynchrony, and so we'll separate fix_successor
+    # (update) from reconcile().
     def reconcile(self):
-        self.fix_successor()
         self.succlist = self.succ.get_succ_list()
         self.clean_succ_list()
-        if self.network.config.async != 0:
-            self.network.add_event((int(self.network.curtime+self.network.config.async), self.id, 'r'))
+        if self.network.config.recon != 0:
+            self.network.add_event((int(self.network.curtime+self.network.config.recon), self.id, 'r'))
 
 
 class Network:
@@ -233,8 +255,12 @@ class Network:
                     rmlist.append(e_nodeid)
             elif e_type == 's':  # stabilize
                 self.id2node(e_nodeid).stabilize()
+            elif e_type == "u": # "update" succ -- assuming ASYNC stablization
+                self.id2node(e_nodeid).fix_successor()
             elif e_type == "r": # "reconcile" -- assuming ASYNC stablization
                 self.id2node(e_nodeid).reconcile()
+            elif e_type == "l": # "flush" -- assuming ASYNC stablization
+                self.id2node(e_nodeid).fix_predecessor()
 
             del self.events[i]
 
@@ -288,8 +314,8 @@ class Network:
 
     # Run the simulation. At the end, print out the status of the Chord ring.
     def run(self): 
-        # As long as there are events to run and simtime hasn't elapsed, step through.
-        while self.curtime <= self.config.simtime and self.events != []:
+        # If there are events to run and simtime hasn't elapsed, step through.
+        while self.events != [] and self.events[0][0] <= self.config.simtime:
             self.step()
 
         # Done. Print out the status of the ring.
