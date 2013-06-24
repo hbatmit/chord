@@ -11,7 +11,7 @@ if __name__ == '__main__':
         parser.add_option("-f", "--file", type="string", dest="scenario", 
                           default="scene.dat", help="scenarios for node joins/fails")
         parser.add_option("-t", "--simtime", type="int", dest="simtime", 
-                          default=1000, help="total simulation time steps")
+                          default=200, help="total simulation time steps")
         parser.add_option("-l", "--latency", type="int", dest="maxlat", 
                           default=1, help="max latency between nodes")
         parser.add_option("-p", "--prob", type="float", dest="prob", 
@@ -20,6 +20,8 @@ if __name__ == '__main__':
                           default=5, help="stabilize every ... timesteps")
         parser.add_option("-r", "--maxsucc", type="int", dest="maxsucc", 
                           default=3, help="max size of successor list")
+        parser.add_option("-a", "--async", type="int", dest="async", 
+                          default=0, help="async succ reconciliation (0 means SYNC)")
         parser.add_option("-v", "--verbose", action="store_true", dest="verbose", 
                           default=False, help="print diagnostics/debugging")
 

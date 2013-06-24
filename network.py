@@ -1,5 +1,4 @@
-# A small simulator to test and experiment with Chord's stablization/idealization
-# protocol(s).
+# A simulator to experiment with Chord's stablization/idealization protocol(s).
 # Created by: Hari Balakrishnan, hari@mit.edu, June 2013.
 
 import sys
@@ -31,8 +30,10 @@ class Node:
         self.pred = None
         n1 = self.network.id2node(n1_id)
         self.succ = n1.find_successor(self.id)
-        self.succlist = self.succ.get_succ_list()
-        self.clean_succ_list()
+        if self.network.config.async == 0: # synchronous succ reconciliation
+#            self.reconcile()
+            self.succlist = self.succ.get_succ_list()
+            self.clean_succ_list()
         print '  JOINED %s' % self.repr()
 
         
@@ -116,9 +117,8 @@ class Node:
                 print '\tsucc.pred is', x.id
             self.succ = x
         self.succ.notify(self)
-        self.fix_successor()
-        self.succlist = self.succ.get_succ_list()
-        self.clean_succ_list()
+        if self.network.config.async == 0:
+            self.reconcile()
         self.check_predecessor()
 
         # Schedule re-stabilization (and check_predecessor) in the future.
@@ -173,6 +173,14 @@ class Node:
                 print ']'
 
 
+    def reconcile(self):
+        self.fix_successor()
+        self.succlist = self.succ.get_succ_list()
+        self.clean_succ_list()
+        if self.network.config.async != 0:
+            self.network.add_event((int(self.network.curtime+self.network.config.async), self.id, 'r'))
+
+
 class Network:
     def __init__(self, conf, events):
         self.config = conf
@@ -215,6 +223,9 @@ class Network:
                     rmlist.append(e_nodeid)
             elif e_type == 's':  # stabilize
                 self.id2node(e_nodeid).stabilize()
+            elif e_type == "r": # "reconcile" -- assuming ASYNC stablization
+                self.id2node(e_nodeid).reconcile()
+
             del self.events[i]
 
     # Add a Node to the Chord network. Really just for bookkeeping and 
