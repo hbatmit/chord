@@ -1,5 +1,5 @@
 # Time NodeID EventType(j=join,f=fail) [JoinNodeID]
-# python chord.py -t 100 -f  fig4.dat  -s 1000 -r 1
+# python chord.py -t 50 -f  fig4.dat  -s 1000 -r 1
 
 0 9 j 
 0 17 j 9
@@ -14,18 +14,23 @@
 14 9 s
 
 # 13 now joins
-21 13 j 17
+15 13 j 17
 
 # 20 joins
-22 20 j 25
+16 20 j 25
 
-# and 20 stabilizes
-23 20 s
+# and 20 reconciles
+17 20 s
+18 17 s
+19 25 s
 
-23 9 s
-24 17 s
-25 25 s
+20 13 s
 
-27 13 s
-28 17 f
-30 13 s
+# When 13 is "incorporated into the ring", it does so by stabilizing. During
+# its stabilization, it inherits the successor list from it's successor, 17.
+# That includes the node 20. When 17 fails, 13 therefore has 20 as its new
+# successor, and not 25 as noted. The error in the counterexample arises 
+# because PZ has neglected to reconcile the successor list during
+# stabilization.
+
+21 9 s
