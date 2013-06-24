@@ -1,4 +1,6 @@
+# python chord.py -t 100 -f fig7.dat -r 1 [-a 5]
 # Time NodeID EventType(j=join,f=fail) [JoinNodeID]
+
 0 0 j 
 1 18 j 0
 2 40 j 0

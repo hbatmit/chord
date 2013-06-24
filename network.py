@@ -30,10 +30,11 @@ class Node:
         self.pred = None
         n1 = self.network.id2node(n1_id)
         self.succ = n1.find_successor(self.id)
-        if self.network.config.async == 0: # synchronous succ reconciliation
+        self.reconcile()
+#        if self.network.config.async == 0: # synchronous succ reconciliation
 #            self.reconcile()
-            self.succlist = self.succ.get_succ_list()
-            self.clean_succ_list()
+#            self.succlist = self.succ.get_succ_list()
+#            self.clean_succ_list()
         print '  JOINED %s' % self.repr()
 
         
@@ -145,6 +146,11 @@ class Node:
     # Note: was called "fix_predecessor" in PODC 2002.
     def check_predecessor(self):
         if (self.pred is not None and self.pred.id not in self.network.livenodes):
+            if self.network.config.verbose:
+                print 't=%d %s pred fail' % (self.network.curtime, self.repr())
+            # not in paper
+            if self.succ == self.pred:
+                self.succ = self
             self.pred = None
 
     # From PODC: periodically update failed successor pointer, if necessary.
@@ -156,6 +162,10 @@ class Node:
                 print '\tsucclist: [', 
                 for n in self.succlist: print n.id,
                 print ']'
+
+            # not in the paper
+            if self.pred == self.succ:
+                self.pred = None
             # successor has failed
             self.succ = self
             for s in self.succlist:
@@ -167,7 +177,7 @@ class Node:
                     self.succlist.remove(s)
 
             if self.network.config.verbose:
-                print 'fixed succ:', self.repr()
+                print '\tfixed succ:', self.repr()
                 print '\tsucclist: [', 
                 for n in self.succlist: print n.id,
                 print ']'
