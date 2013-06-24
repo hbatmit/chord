@@ -33,6 +33,7 @@ class Node:
         self.succ = n1.find_successor(self.id)
         self.succlist = self.succ.get_succ_list()
         self.clean_succ_list()
+        print '  JOINED %s' % self.repr()
 
         
     # Is x inside circular range (a,b] or (a,b)? 
@@ -65,7 +66,7 @@ class Node:
     # Find the successor node of a specified id.
     def find_successor(self, id):
         if self.network.config.verbose:
-            print 'Node %d find_succ for %d' % (self.id, id)
+            print '  Node %d find_succ for %d' % (self.id, id)
         if self.inside(id, self.id, self.succ.id):
             return self.succ
         else:
@@ -202,6 +203,8 @@ class Network:
                     if len(e) >= 4:
                         e_joinat = int(e[3])
                         n.join(e_joinat)
+                    else:
+                        print 't=%d JOIN node %s' % (self.curtime, n.repr())
                     self.add_node(n)
                     # add a stabilization event for a future time
                     self.add_event((int(e_time+self.config.stabperiod), e_nodeid, 's'))

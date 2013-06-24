@@ -5,8 +5,6 @@ import numpy
 
 if __name__ == '__main__':
     parser = OptionParser()
-    parser.add_option("-n", "--numnodes", type="int", dest="numnodes", 
-                      default=100, help="number of nodes")
     parser.add_option("-j", "--joinrate", type="float", dest="joinrate",
                       default=1, help="rate of node joins (Poisson")
     parser.add_option("-f", "--failrate", type="float", dest="failrate",
