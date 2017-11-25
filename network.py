@@ -1,5 +1,5 @@
 # A simulator to experiment with Chord's stablization/idealization protocol(s).
-# Created by: Hari Balakrishnan, hari@mit.edu, June 2013.
+# Created by: Hari Balakrishnan, hari@csail.mit.edu, June 2013.
 
 import sys
 import random
@@ -43,28 +43,20 @@ class Node:
     # The last argument is incl=True or False, where
     # True means (a,b]; False means (a,b)
     # Note: inside(x, a, a) is True as long as x != a.
-    # XXX These steps are subtle; maybe there's an easier and less bug-prone way
-    # to express what we want?
+    # The file in.py in this directory shows different
+    # ways to write inside()
+
     def inside(self, x, a, b, incl=True):
-        if a == b: 
-            return incl or x != a
-        if a < b:
-            if a < x:
-                if incl:
-                    return x <= b
-                else:
-                    return x < b
+        if incl:
+            if a < b:
+                return (a < x and x <= b)
             else:
-                return False
+                return (a < x or x <= b)
         else:
-            if x <= a:
-                if incl:
-                    return b >= x
-                else:
-                    return b > x
+            if a < b:
+                return (a < x and x < b)
             else:
-                return True
-                
+                return (a < x or x < b)
 
     # Find the successor node of a specified id.
     def find_successor(self, id):
@@ -104,7 +96,6 @@ class Node:
         for n in self.succlist:
             if n == self or n == self.succ:
                 self.succlist.remove(n)
-
 
     # stabilize() is called periodically. 
     # Verifies immediate successor and tells successor about the node.
@@ -160,8 +151,8 @@ class Node:
             if self.network.config.verbose:
                 print 't=%d %s pred fail' % (self.network.curtime, self.repr())
             # not in paper
-            if self.succ == self.pred:
-                self.succ = self
+#            if self.succ == self.pred:
+#                self.succ = self
             self.pred = None
 
         if self.network.config.flush != 0:
@@ -180,8 +171,8 @@ class Node:
                 print ']'
 
             # not in the paper
-            if self.pred == self.succ:
-                self.pred = None
+#            if self.pred == self.succ:
+#                self.pred = None
             # successor has failed
             self.succ = self
             for s in self.succlist:
@@ -202,13 +193,14 @@ class Node:
             self.network.add_event((int(self.network.curtime+self.network.config.update), self.id, 'u'))
 
 
-    # reconcile() fixes our successor list. Any reasonable interpretation would
-    # have the fix to our successor always happen synchronously, but the
-    # the analysis in PZ assumes asynchrony, and so we'll separate fix_successor
-    # (update) from reconcile().
+    # reconcile() fixes our successor list. Any reasonable
+    # interpretation would have the fix to our successor always happen
+    # synchronously, but the the analysis in PZ assumes asynchrony,
+    # and so we'll separate fix_successor (update) from reconcile().
     def reconcile(self):
-        self.succlist = self.succ.get_succ_list()
-        self.clean_succ_list()
+        if self.succ.id in self.network.livenodes:
+            self.succlist = self.succ.get_succ_list()
+            self.clean_succ_list()
         if self.network.config.recon != 0:
             self.network.add_event((int(self.network.curtime+self.network.config.recon), self.id, 'r'))
 
@@ -229,14 +221,12 @@ class Network:
         i = 0
         while i < len(self.events):
             e = self.events[i]
-            e_time = int(e[0])
+            (e_time, e_nodeid, e_type) = (int(e[0]), int(e[1]), e[2])
             if e_time > self.curtime:
                 for nodeid in rmlist:
                     self.remove_events(nodeid)
                 return
             # event's time has come
-            e_nodeid = int(e[1])
-            e_type = e[2]
             if e_type == 'j':   # join
                 if e_nodeid not in self.livenodes:
                     n = Node(e_nodeid, self) # make a new node

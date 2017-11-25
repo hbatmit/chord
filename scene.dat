@@ -1,4 +1,4 @@
-# Time NodeID EventType(j=join,f=fail) [JoinNodeID]
+# Time NodeID EventType(j=join,f=fail) JoinByContactingNodeID
 1 10 j 
 2 33 j 10
 2 2 j 10
